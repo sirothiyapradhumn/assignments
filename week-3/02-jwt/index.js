@@ -1,49 +1,55 @@
 const jwt = require('jsonwebtoken');
+const zod = require('zod');
 const jwtPassword = 'secret';
 
+const emailSchema = zod.string().email();
+const passwordSchema = zod.string().min(6);
 
-/**
- * Generates a JWT for a given username and password.
- *
- * @param {string} username - The username to be included in the JWT payload.
- *                            Must be a valid email address.
- * @param {string} password - The password to be included in the JWT payload.
- *                            Should meet the defined length requirement (e.g., 6 characters).
- * @returns {string|null} A JWT string if the username and password are valid.
- *                        Returns null if the username is not a valid email or
- *                        the password does not meet the length requirement.
- */
+
 function signJwt(username, password) {
-    // Your code here
+    const userResponse = emailSchema.safeParse(username);
+    const passResponse = passwordSchema.safeParse(password);
+
+    if (!(userResponse.success && passResponse.success)) {
+        return {
+            success: false,
+            message: 'Invalid username or password'
+        };
+    }
+    const payload = {
+        username: userResponse.data,
+        password: passResponse.data,
+    }
+    return jwt.sign(payload, jwtPassword);
 }
 
-/**
- * Verifies a JWT using a secret key.
- *
- * @param {string} token - The JWT string to verify.
- * @returns {boolean} Returns true if the token is valid and verified using the secret key.
- *                    Returns false if the token is invalid, expired, or not verified
- *                    using the secret key.
- */
+// console.log(signJwt('test@gmail.com', 'qwerty'))
+
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RAZ21haWwuY29tIiwicGFzc3dvcmQiOiJxd2VydHkiLCJpYXQiOjE3Mjc2MzIxMzJ9.TmL9TRgN82UjDQ6lngKNTd6gvft1ssIBSE6-32G-owY
+
+
 function verifyJwt(token) {
-    // Your code here
+    try {
+        const verifier = jwt.verify(token, jwtPassword);
+        return verifier;
+    } catch (error) {
+        return false;
+    }
 }
 
-/**
- * Decodes a JWT to reveal its payload without verifying its authenticity.
- *
- * @param {string} token - The JWT string to decode.
- * @returns {object|false} The decoded payload of the JWT if the token is a valid JWT format.
- *                         Returns false if the token is not a valid JWT format.
- */
+const test1 = verifyJwt("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RAZ21haWwuY29tIiwicGFzc3dvcmQiOiJxd2VydHkiLCJpYXQiOjE3Mjc2MzIxMzJ9.TmL9TRgN82UjDQ6lngKNTd6gvft1ssIBSE6-32G-owY");
+
+console.log(test1)
+
+
 function decodeJwt(token) {
-    // Your code here
+    const decoded = jwt.decode(token);
+    if (decoded) {
+        return true;
+    }
+    return false;
 }
 
+const test = decodeJwt("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RAZ21haWwuY29tIiwicGFzc3dvcmQiOiJxd2VydHkiLCJpYXQiOjE3Mjc2MzIxMzJ9.TmL9TRgN82UjDQ6lngKNTd6gvft1ssIBSE6-32G-owY");
 
-module.exports = {
-  signJwt,
-  verifyJwt,
-  decodeJwt,
-  jwtPassword,
-};
+console.log(test)
